@@ -1,0 +1,15 @@
+{
+  "llvm-target": "m68k-unknown-none",
+  "data-layout": "E-m:e-p:32:16:32-i8:8:8-i16:16:16-i32:16:32-n8:16:32-a:0:16-S16",
+  "arch": "m68k",
+  "target-endian": "big",
+  "target-pointer-width": "32",
+  "os": "none",
+  "executables": true,
+  "relocation-model": "static",
+  "disable-redzone": true,
+  "linker-flavor": "gcc",
+  "linker": "m68k-amiga-elf-gcc",
+  "panic-strategy": "abort",
+  "max-atomic-width": 0
+}
