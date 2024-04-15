@@ -11,6 +11,7 @@ const COP1LC: *mut usize = 0xdff080 as *mut usize;
 
 extern "C" fn start() -> ! {
 
+    // Everything is unsafe, lol
     unsafe {
         // DMA and interrupts off
         *DMACON = 0x7fff;
@@ -19,6 +20,7 @@ extern "C" fn start() -> ! {
         // Set BG red
         *COLOR00 = 0xf00;
 
+        // This wants to do a 32bit multiply operation and crashes ¯\_(ツ)_/¯
         // COP1LC.write_volatile(&COPPER as *const _ as usize);
         // // Enable copper DMA
         // *DMACON = 0x8280;
@@ -38,8 +40,8 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-#[link_section = ".MEMF_CHIP"]
+#[link_section = ".MEMF_CHIP"] // Elf2hunk needs this suffix to map to correct memory type
 static COPPER: [u16; 4] = [
-    0x180, 0xff0, 
-    0xffff, 0xfffd,
+    0x180, 0xff0, // Change bg col to yellow
+    0xffff, 0xfffd, // end copperlist
 ];
