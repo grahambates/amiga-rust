@@ -13,7 +13,7 @@ $(HUNKEXE): $(ELFEXE)
 	$(ELF2HUNK) $< $@
 
 $(ELFEXE): main.rs gcc8_a_support.o m68k-bare-metal.json
-	cargo build
+	cargo +nightly build
 
 gcc8_a_support.o: gcc8_a_support.s
 	$(CC) $(CCFLAGS) $(ASFLAGS) -c -o $@ $<

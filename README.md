@@ -4,7 +4,6 @@
 
 ```bash
 rustup install nightly
-rustup override set nightly
 rustup component add rust-src
 ```
 
