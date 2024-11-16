@@ -1,6 +1,6 @@
 PROG=m68k-rust
 TARGETDIR=target/m68k-bare-metal/debug
-ELFEXE=$(TARGETDIR)/$(PROG)
+ELFEXE=$(TARGETDIR)/$(PROG).elf
 HUNKEXE=$(TARGETDIR)/$(PROG).exe
 
 FS-UAE=/Applications/FS-UAE-3.app/Contents/MacOS/fs-uae
@@ -12,8 +12,8 @@ ASFLAGS = -Wa,-g,--register-prefix-optional
 $(HUNKEXE): $(ELFEXE)
 	$(ELF2HUNK) $< $@
 
-$(ELFEXE): main.rs gcc8_a_support.o
-	cargo xbuild --target ./m68k-bare-metal.json
+$(ELFEXE): main.rs gcc8_a_support.o m68k-bare-metal.json
+	cargo +nightly build
 
 gcc8_a_support.o: gcc8_a_support.s
 	$(CC) $(CCFLAGS) $(ASFLAGS) -c -o $@ $<
