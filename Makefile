@@ -1,6 +1,6 @@
 PROG=m68k-rust
 TARGETDIR=target/m68k-bare-metal/debug
-ELFEXE=$(TARGETDIR)/$(PROG)
+ELFEXE=$(TARGETDIR)/$(PROG).elf
 HUNKEXE=$(TARGETDIR)/$(PROG).exe
 
 FS-UAE=/Applications/FS-UAE-3.app/Contents/MacOS/fs-uae
