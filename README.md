@@ -6,7 +6,6 @@
 rustup install nightly
 rustup override set nightly
 rustup component add rust-src
-cargo install cargo-xbuild
 ```
 
 Uses toolchain binaries from [vscode-amiga-debug](https://github.com/BartmanAbyss/vscode-amiga-debug/tree/master/bin).
