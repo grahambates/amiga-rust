@@ -13,6 +13,10 @@ mod custom;
 pub macro asm("assembly template", $(operands,)* $(options($(option),*))?) {
     /* compiler built-in */
 }
+#[rustc_builtin_macro]
+pub macro global_asm("assembly template", $(operands,)* $(options($(option),*))?) {
+    /* compiler built-in */
+}
 
 #[rustc_builtin_macro]
 macro_rules! include_bytes {
@@ -23,12 +27,6 @@ macro_rules! include_bytes {
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
-}
-
-// Define the entry point of the program
-#[no_mangle]
-pub extern "C" fn _start() {
-    start();
 }
 
 //-------------------------------------------------------------------------------
@@ -42,7 +40,8 @@ const BPLS: u16 = 5;
 const IMAGE_SIZE: u16 = DIW_BW*DIW_H*BPLS;
 
 // Entrypoint
-extern "C" fn start() {
+#[no_mangle]
+extern "C" fn _start() {
     kill_system();
 
     // Set bitplane pointers in copper
