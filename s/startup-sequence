@@ -1,1 +1,1 @@
-SYS:target/m68k-bare-metal/debug/m68k-rust.exe
+SYS:target/m68k-bare-metal/release/m68k-rust.exe

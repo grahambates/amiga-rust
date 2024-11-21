@@ -1,2 +1,4 @@
 /target/
 /gcc8_a_support.o
+.DS_Store
+*.map

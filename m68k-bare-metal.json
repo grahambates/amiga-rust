@@ -33,5 +33,27 @@
   "target-endian": "big",
   "target-family": ["unix"],
   "target-mcount": "_mcount",
-  "target-pointer-width": "32"
+  "target-pointer-width": "32",
+  "pre-link-args": {
+    "gcc": [
+      "-g",
+      "-MP",
+      "-MMD",
+      "-m68000",
+      "-Og",
+      "-nostdlib",
+      "-Wextra",
+      "-Wno-unused-function",
+      "-Wno-volatile-register-var",
+      "-fomit-frame-pointer",
+      "-fno-tree-loop-distribution",
+      "-flto",
+      "-fwhole-program",
+      "-fno-exceptions",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Wl,--emit-relocs,--gc-sections,-Ttext=0,-Map=Output.map"
+    ]
+  },
+  "code-model": "medium"
 }
