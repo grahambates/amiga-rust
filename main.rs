@@ -21,7 +21,7 @@ macro_rules! include_bytes {
 
 // Minimal panic handler
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
