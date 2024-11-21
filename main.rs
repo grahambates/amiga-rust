@@ -1,10 +1,9 @@
-#![allow(internal_features)]
+#![allow(internal_features, static_mut_refs)]
 #![feature(rustc_attrs, decl_macro, asm_experimental_arch)]
 #![no_std]
 #![no_main]
 
 use core::panic::PanicInfo;
-use core::ptr::{read_volatile, write_volatile};
 use crate::custom::*;
 mod custom;
 
@@ -22,7 +21,7 @@ macro_rules! include_bytes {
 
 // Minimal panic handler
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
@@ -56,13 +55,14 @@ extern "C" fn start() {
         image_addr += DIW_BW as u32;
     }
 
-    #[allow(static_mut_refs)]
+    let custom = Custom::instance();
+
+    // Set copper pointer
     unsafe {
-        // Set copper pointer
-        write_volatile(&mut (*CUSTOM).cop1lc, COPPER.as_ptr() as u32);
-        // Enable copper and blitplane DMA
-        write_volatile(&mut (*CUSTOM).dmacon, DMAF_SETCLR|DMAF_MASTER|DMAF_COPPER|DMAF_RASTER);
+        custom.cop1lc(COPPER.as_ptr() as u32);
     }
+    // Enable copper and blitplane DMA
+    custom.dmacon(DMAF_SETCLR|DMAF_MASTER|DMAF_COPPER|DMAF_RASTER);
 
     while !right_mouse_button() {
         wait_line(303);
@@ -75,32 +75,27 @@ fn kill_system() {
     // TODO:
     // Need to back up and restore
     wait_line(303);
-    unsafe {
-        // DMA and interrupts off
-        write_volatile(&mut (*CUSTOM).dmacon, DMAF_ALL);
-        write_volatile(&mut (*CUSTOM).intena, INTF_ALL);
-    }
+    let custom = Custom::instance();
+    // DMA and interrupts off
+    custom.dmacon(DMAF_ALL);
+    custom.intena(INTF_ALL);
 }
 
 fn restore_system() {
     // TODO:
-    unsafe {
-        write_volatile(&mut (*CUSTOM).dmacon, DMAF_ALL);
-    }
+    let custom = Custom::instance();
+    custom.dmacon(DMAF_ALL);
 }
 
 #[inline(always)]
 fn wait_line(line: u32) {
-    unsafe {
-        while (read_volatile(&(*CUSTOM).vposr) & 0x1ff00) != ((line << 8) & 0x1ff00) {}
-    }
+    let custom = Custom::instance();
+    while (custom.vposr() & 0x1ff00) != ((line << 8) & 0x1ff00) {}
 }
 
 #[inline(always)]
 pub fn right_mouse_button() -> bool {
-    unsafe {
-        !(read_volatile(&(*CUSTOM).potinp) & (1<<10) != 0)
-    }
+    Custom::instance().potinp() & (1<<10) == 0
 }
 
 //-------------------------------------------------------------------------------
