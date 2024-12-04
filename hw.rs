@@ -1,4 +1,5 @@
 use crate::custom::*;
+use crate::cia::*;
 use core::arch::*;
 
 /// Backed up system state to restore on exit
@@ -67,10 +68,19 @@ pub fn restore_system(state: SysState) {
     custom.cop2lc(state.cop2);
     // Load View
     load_view(state.actiview);
+}
 
-    // Return status - TODO: better way to do this?
+/// Graphics.library LoadView
+fn load_view(view: u32) {
     unsafe {
-        asm!("move.l $0, %d0", options(nostack));
+        asm!(
+            "move.l 4, %a6", // exec base
+            "move.l 156(%a6), %a6", // Graphics.library (ExecBase->IntVects[6].iv_Data)
+            ".short 0x4eae", // jsr {offset}(a6)
+            ".short -222", // _LVOLoadView
+            in("a1") view,
+            options(nostack),
+        );
     }
 }
 
@@ -90,18 +100,15 @@ pub fn right_mouse_button() -> bool {
     Custom::instance().potinp() & (1 << 10) == 0
 }
 
-/// Graphics.library LoadView
-fn load_view(view: u32) {
-    unsafe {
-        asm!(
-            "move.l 4, %a6", // exec base
-            "move.l 156(%a6), %a6", // Graphics.library (ExecBase->IntVects[6].iv_Data)
-            ".short 0x4eae", // jsr {offset}(a6)
-            ".short -222", // _LVOLoadView
-            in("a1") view,
-            options(nostack),
-        );
-    }
+#[inline(always)]
+pub fn left_mouse_button() -> bool {
+    CIA::a().pra() & CiaAPortABit::GamePort0.flag() == 0
+}
+
+#[inline(always)]
+pub fn wait_blit() {
+    Custom::instance().dmaconr(); // A1000 compat
+    while Custom::instance().dmaconr() & DmaBit::Blitter.flag() != 0 {}
 }
 
 // Copper

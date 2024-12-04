@@ -5,7 +5,7 @@ impl Custom {
         unsafe { &mut *(0xdff000 as *mut Self) }
     }
 
-    // Getters
+    // Setters
     pub fn dmacon(&mut self, value: u16) {
         unsafe { write_volatile(&mut self.dmacon, value); }
     }
@@ -19,7 +19,7 @@ impl Custom {
         unsafe { write_volatile(&mut self.cop2lc, value); }
     }
 
-    // Setters
+    // Getters
     pub fn vposr(&mut self) -> u32 {
         unsafe { read_volatile(&mut self.vposr) }   
     }
@@ -149,12 +149,12 @@ pub struct Custom {
 
 #[repr(C)]
 pub struct AudChannel {
-    pub ac_ptr: u32,
-    pub ac_len: u16,
-    pub ac_per: u16,
-    pub ac_vol: u16,
-    pub ac_dat: u16,
-    pub ac_pad: [u16; 2],
+    pub ptr: u32,
+    pub len: u16,
+    pub per: u16,
+    pub vol: u16,
+    pub dat: u16,
+    pub pad: [u16; 2],
 }
 
 #[repr(C)]
@@ -325,9 +325,62 @@ pub enum CustomOffset {
     Bpl2mod = 0x10a,
     Bplcon4 = 0x10c,
     Clxcon2 = 0x10e,
-    Bpldat = 0x110,
-    Sprpt = 0x120,
-    Spr = 0x140,
+    Bpldat1 = 0x110,
+    Bpldat2 = 0x112,
+    Bpldat3 = 0x114,
+    Bpldat4 = 0x116,
+    Bpldat5 = 0x118,
+    Bpldat6 = 0x11a,
+    Bpldat7 = 0x11c,
+    Bpldat8 = 0x11e,
+    Sprpt1h = 0x120,
+    Sprpt1l = 0x122,
+    Sprpt2h = 0x124,
+    Sprpt2l = 0x126,
+    Sprpt3h = 0x128,
+    Sprpt3l = 0x12a,
+    Sprpt4h = 0x12c,
+    Sprpt4l = 0x12e,
+    Sprpt5h = 0x130,
+    Sprpt5l = 0x132,
+    Sprpt6h = 0x134,
+    Sprpt6l = 0x136,
+    Sprpt7h = 0x138,
+    Sprpt7l = 0x13a,
+    Sprpt8h = 0x13c,
+    Sprpt8l = 0x13e,
+    Spr0pos = 0x140,
+    Spr0ctl = 0x142,
+    Spr0data = 0x144,
+    Spr0datb = 0x146,
+    Spr1pos = 0x148,
+    Spr1ctl = 0x14a,
+    Spr1data = 0x14c,
+    Spr1datb = 0x14e,
+    Spr2pos = 0x150,
+    Spr2ctl = 0x152,
+    Spr2data = 0x154,
+    Spr2datb = 0x156,
+    Spr3pos = 0x158,
+    Spr3ctl = 0x15a,
+    Spr3data = 0x15c,
+    Spr3datb = 0x15e,
+    Spr4pos = 0x160,
+    Spr4ctl = 0x162,
+    Spr4data = 0x164,
+    Spr4datb = 0x166,
+    Spr5pos = 0x168,
+    Spr5ctl = 0x16a,
+    Spr5data = 0x16c,
+    Spr5datb = 0x16e,
+    Spr6pos = 0x170,
+    Spr6ctl = 0x172,
+    Spr6data = 0x174,
+    Spr6datb = 0x176,
+    Spr7pos = 0x178,
+    Spr7ctl = 0x17a,
+    Spr7data = 0x17c,
+    Spr7datb = 0x17e,
     Color00 = 0x180,
     Color01 = 0x182,
     Color02 = 0x184,

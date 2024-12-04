@@ -5,9 +5,12 @@
 
 use crate::custom::*;
 use crate::hw::*;
+use core::arch::*;
 use core::panic::PanicInfo;
-mod custom;
+
 mod hw;
+mod custom;
+mod cia;
 
 // Minimal panic handler
 #[panic_handler]
@@ -43,10 +46,9 @@ extern "C" fn _start() {
     let custom = Custom::instance();
 
     // Set copper pointer
-    unsafe {
-        custom.cop1lc(COPPER.as_ptr() as u32);
-    }
-    // Enable copper and blitplane DMA
+    unsafe { custom.cop1lc(COPPER.as_ptr() as u32) }
+
+    // Enable DMA
     custom.dmacon(
         DmaBit::SetClr.flag()
             | DmaBit::Master.flag()
@@ -54,11 +56,15 @@ extern "C" fn _start() {
             | DmaBit::Raster.flag(),
     );
 
-    while !right_mouse_button() {
+    while !left_mouse_button() && !right_mouse_button() {
+        // Do effect
+
+        wait_blit();
         wait_eof();
     }
 
     restore_system(state);
+    unsafe { asm!("move.l $0, %d0", options(nostack)) }
 }
 
 //-------------------------------------------------------------------------------
