@@ -12,11 +12,8 @@ ASFLAGS = -Wa,-g,--register-prefix-optional
 $(HUNKEXE): $(ELFEXE)
 	$(ELF2HUNK) $< $@
 
-$(ELFEXE): main.rs gcc8_a_support.o m68k-bare-metal.json
+$(ELFEXE): main.rs hw.rs custom.rs m68k-bare-metal.json
 	cargo +nightly build --release
-
-gcc8_a_support.o: gcc8_a_support.s
-	$(CC) $(CCFLAGS) $(ASFLAGS) -c -o $@ $<
 
 run: $(HUNKEXE)
 	$(FS-UAE) --hard_drive_0=. --console_debugger=1

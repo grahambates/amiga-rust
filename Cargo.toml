@@ -10,3 +10,6 @@ edition = "2021"
 [[bin]]
 name = "m68k-rust"
 path = "main.rs"
+test = false
+doctest = false
+bench = false

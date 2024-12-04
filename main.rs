@@ -1,27 +1,13 @@
-#![allow(internal_features, static_mut_refs)]
-#![feature(rustc_attrs, decl_macro, asm_experimental_arch)]
+#![allow(static_mut_refs, dead_code)]
+#![feature(asm_experimental_arch)]
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
 use crate::custom::*;
+use crate::hw::*;
+use core::panic::PanicInfo;
 mod custom;
-
-// Copy/paste some built-in macros from std
-
-#[rustc_builtin_macro]
-pub macro asm("assembly template", $(operands,)* $(options($(option),*))?) {
-    /* compiler built-in */
-}
-#[rustc_builtin_macro]
-pub macro global_asm("assembly template", $(operands,)* $(options($(option),*))?) {
-    /* compiler built-in */
-}
-
-#[rustc_builtin_macro]
-macro_rules! include_bytes {
-    ($file:expr $(,)?) => {{ /* compiler built-in */ }};
-}
+mod hw;
 
 // Minimal panic handler
 #[panic_handler]
@@ -35,21 +21,21 @@ fn panic(_info: &PanicInfo) -> ! {
 
 const DIW_W: u16 = 320;
 const DIW_H: u16 = 256;
-const DIW_BW: u16 = DIW_W/8;
+const DIW_BW: u16 = DIW_W / 8;
 const BPLS: u16 = 5;
-const IMAGE_SIZE: u16 = DIW_BW*DIW_H*BPLS;
+const IMAGE_SIZE: u16 = DIW_BW * DIW_H * BPLS;
 
 // Entrypoint
 #[no_mangle]
 extern "C" fn _start() {
-    kill_system();
+    let state = kill_system();
 
     // Set bitplane pointers in copper
     let mut image_addr = IMAGE.as_ptr() as u32;
     for i in 0..BPLS {
         unsafe {
-            COPPER[(1+i*4) as usize] = (image_addr >> 16) as u16; 
-            COPPER[(3+i*4) as usize] = (image_addr & 0xFFFF) as u16;
+            COPPER[(i * 2) as usize].second = (image_addr >> 16) as u16;
+            COPPER[(i * 2 + 1) as usize].second = (image_addr & 0xFFFF) as u16;
         }
         image_addr += DIW_BW as u32;
     }
@@ -61,40 +47,18 @@ extern "C" fn _start() {
         custom.cop1lc(COPPER.as_ptr() as u32);
     }
     // Enable copper and blitplane DMA
-    custom.dmacon(DMAF_SETCLR|DMAF_MASTER|DMAF_COPPER|DMAF_RASTER);
+    custom.dmacon(
+        DmaBit::SetClr.flag()
+            | DmaBit::Master.flag()
+            | DmaBit::Copper.flag()
+            | DmaBit::Raster.flag(),
+    );
 
     while !right_mouse_button() {
         wait_line(303);
     }
 
-    restore_system();
-}
-
-fn kill_system() {
-    // TODO:
-    // Need to back up and restore
-    wait_line(303);
-    let custom = Custom::instance();
-    // DMA and interrupts off
-    custom.dmacon(DMAF_ALL);
-    custom.intena(INTF_ALL);
-}
-
-fn restore_system() {
-    // TODO:
-    let custom = Custom::instance();
-    custom.dmacon(DMAF_ALL);
-}
-
-#[inline(always)]
-fn wait_line(line: u32) {
-    let custom = Custom::instance();
-    while (custom.vposr() & 0x1ff00) != ((line << 8) & 0x1ff00) {}
-}
-
-#[inline(always)]
-pub fn right_mouse_button() -> bool {
-    Custom::instance().potinp() & (1<<10) == 0
+    restore_system(state);
 }
 
 //-------------------------------------------------------------------------------
@@ -102,38 +66,62 @@ pub fn right_mouse_button() -> bool {
 // Copper list
 
 #[link_section = ".MEMF_CHIP"]
-static mut COPPER: [u16;102] = [
+static mut COPPER: [CopInst; 51] = [
     // bitplane pointers
-    BPLPT+0,0, // bpl1h
-    BPLPT+2,0, // bpl1l
-    BPLPT+4,0, // bpl2h
-    BPLPT+6,0, // bpl2l
-    BPLPT+8,0, // bpl3h
-    BPLPT+10,0, // bpl3l
-    BPLPT+12,0, // bpl4h
-    BPLPT+14,0, // bpl4l
-    BPLPT+16,0, // bpl5h
-    BPLPT+18,0, // bpl5l
+    CopInst::mov(CustomOffset::Bplpt1h, 0),
+    CopInst::mov(CustomOffset::Bplpt1l, 0),
+    CopInst::mov(CustomOffset::Bplpt2h, 0),
+    CopInst::mov(CustomOffset::Bplpt2l, 0),
+    CopInst::mov(CustomOffset::Bplpt3h, 0),
+    CopInst::mov(CustomOffset::Bplpt3l, 0),
+    CopInst::mov(CustomOffset::Bplpt4h, 0),
+    CopInst::mov(CustomOffset::Bplpt4l, 0),
+    CopInst::mov(CustomOffset::Bplpt5h, 0),
+    CopInst::mov(CustomOffset::Bplpt5l, 0),
     // Screen
-    BPLCON0,(BPLS<<12)|(1<<9),
-    BPLCON1,0,
-    BPL1MOD,DIW_BW*(BPLS-1),
-    BPL2MOD,DIW_BW*(BPLS-1),
-    DIWSTRT,0x2c81,
-    DIWSTOP,0x2cc1,
-    DDFSTRT,0x38,
-    DDFSTOP,0xd0,
+    CopInst::mov(CustomOffset::Bplcon0, (BPLS << 12) | (1 << 9)),
+    CopInst::mov(CustomOffset::Bplcon1, 0),
+    CopInst::mov(CustomOffset::Bpl1mod, DIW_BW * (BPLS - 1)),
+    CopInst::mov(CustomOffset::Bpl2mod, DIW_BW * (BPLS - 1)),
+    CopInst::mov(CustomOffset::Diwstrt, 0x2c81),
+    CopInst::mov(CustomOffset::Diwstop, 0x2cc1),
+    CopInst::mov(CustomOffset::Ddfstrt, 0x38),
+    CopInst::mov(CustomOffset::Ddfstop, 0xd0),
     // Palette
-    0x0180,0x0210,0x0182,0x0d75,0x0184,0x0e96,0x0186,0x0b76,
-    0x0188,0x0655,0x018a,0x0632,0x018c,0x0854,0x018e,0x0b64,
-    0x0190,0x0966,0x0192,0x0422,0x0194,0x0743,0x0196,0x0644,
-    0x0198,0x0955,0x019a,0x0978,0x019c,0x0a89,0x019e,0x0ea9,
-    0x01a0,0x0942,0x01a2,0x0534,0x01a4,0x0831,0x01a6,0x0b52,
-    0x01a8,0x0621,0x01aa,0x0d62,0x01ac,0x0a51,0x01ae,0x0543,
-    0x01b0,0x0421,0x01b2,0x0fdb,0x01b4,0x0d94,0x01b6,0x0410,
-    0x01b8,0x0778,0x01ba,0x0321,0x01bc,0x0c78,0x01be,0x0834,
+    CopInst::mov(CustomOffset::Color00, 0x0210),
+    CopInst::mov(CustomOffset::Color01, 0x0d75),
+    CopInst::mov(CustomOffset::Color02, 0x0e96),
+    CopInst::mov(CustomOffset::Color03, 0x0b76),
+    CopInst::mov(CustomOffset::Color04, 0x0655),
+    CopInst::mov(CustomOffset::Color05, 0x0632),
+    CopInst::mov(CustomOffset::Color06, 0x0854),
+    CopInst::mov(CustomOffset::Color07, 0x0b64),
+    CopInst::mov(CustomOffset::Color08, 0x0966),
+    CopInst::mov(CustomOffset::Color09, 0x0422),
+    CopInst::mov(CustomOffset::Color10, 0x0743),
+    CopInst::mov(CustomOffset::Color11, 0x0644),
+    CopInst::mov(CustomOffset::Color12, 0x0955),
+    CopInst::mov(CustomOffset::Color13, 0x0978),
+    CopInst::mov(CustomOffset::Color14, 0x0a89),
+    CopInst::mov(CustomOffset::Color15, 0x0ea9),
+    CopInst::mov(CustomOffset::Color16, 0x0942),
+    CopInst::mov(CustomOffset::Color17, 0x0534),
+    CopInst::mov(CustomOffset::Color18, 0x0831),
+    CopInst::mov(CustomOffset::Color19, 0x0b52),
+    CopInst::mov(CustomOffset::Color20, 0x0621),
+    CopInst::mov(CustomOffset::Color21, 0x0d62),
+    CopInst::mov(CustomOffset::Color22, 0x0a51),
+    CopInst::mov(CustomOffset::Color23, 0x0543),
+    CopInst::mov(CustomOffset::Color24, 0x0421),
+    CopInst::mov(CustomOffset::Color25, 0x0fdb),
+    CopInst::mov(CustomOffset::Color26, 0x0d94),
+    CopInst::mov(CustomOffset::Color27, 0x0410),
+    CopInst::mov(CustomOffset::Color28, 0x0778),
+    CopInst::mov(CustomOffset::Color29, 0x0321),
+    CopInst::mov(CustomOffset::Color30, 0x0c78),
+    CopInst::mov(CustomOffset::Color31, 0x0834),
     // end copperlist
-    0xffff, 0xfffd, 
+    CopInst::end(),
 ];
 
 // Image data

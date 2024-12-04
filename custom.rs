@@ -5,7 +5,7 @@ impl Custom {
         unsafe { &mut *(0xdff000 as *mut Self) }
     }
 
-    // Getters/setters
+    // Getters
     pub fn dmacon(&mut self, value: u16) {
         unsafe { write_volatile(&mut self.dmacon, value); }
     }
@@ -15,8 +15,22 @@ impl Custom {
     pub fn cop1lc(&mut self, value: u32) {
         unsafe { write_volatile(&mut self.cop1lc, value); }
     }
+    pub fn cop2lc(&mut self, value: u32) {
+        unsafe { write_volatile(&mut self.cop2lc, value); }
+    }
+
+    // Setters
     pub fn vposr(&mut self) -> u32 {
         unsafe { read_volatile(&mut self.vposr) }   
+    }
+    pub fn dmaconr(&mut self) -> u16 {
+        unsafe { read_volatile(&mut self.dmaconr) }   
+    }
+    pub fn intenar(&mut self) -> u16 {
+        unsafe { read_volatile(&mut self.intenar) }   
+    }
+    pub fn intreqr(&mut self) -> u16 {
+        unsafe { read_volatile(&mut self.intreqr) }   
     }
     pub fn potinp(&mut self) -> u16 {
         unsafe { read_volatile(&mut self.potinp) }   
@@ -25,6 +39,7 @@ impl Custom {
     // TODO: add the rest...
 }
 
+/// Custom struct
 #[repr(C)]
 pub struct Custom {
     bltddat: u16,
@@ -150,161 +165,225 @@ pub struct SpriteDef {
     pub datab: u16,
 }
 
-// Constants for INTB (Interrupt Bits)
-pub const INTB_SETCLR: u16 = 15;
-pub const INTB_INTEN: u16 = 14;
-pub const INTB_EXTER: u16 = 13;
-pub const INTB_DSKSYNC: u16 = 12;
-pub const INTB_RBF: u16 = 11;
-pub const INTB_AUD3: u16 = 10;
-pub const INTB_AUD2: u16 = 9;
-pub const INTB_AUD1: u16 = 8;
-pub const INTB_AUD0: u16 = 7;
-pub const INTB_BLIT: u16 = 6;
-pub const INTB_VERTB: u16 = 5;
-pub const INTB_COPER: u16 = 4;
-pub const INTB_PORTS: u16 = 3;
-pub const INTB_SOFTINT: u16 = 2;
-pub const INTB_DSKBLK: u16 = 1;
-pub const INTB_TBE: u16 = 0;
+#[repr(u16)]
+pub enum InterruptBit {
+    SetClr = 15,
+    IntEn = 14,
+    Exter = 13,
+    DiskSync = 12,
+    Rbf = 11,
+    Aud3 = 10,
+    Aud2 = 9,
+    Aud1 = 8,
+    Aud0 = 7,
+    Blit = 6,
+    Vertb = 5,
+    Coper = 4,
+    Ports = 3,
+    SoftInt = 2,
+    DiskBlk = 1,
+    Tbe = 0,
+}
 
-// Interrupt Flags
-pub const INTF_SETCLR: u16 = 1 << INTB_SETCLR;
-pub const INTF_INTEN: u16 = 1 << INTB_INTEN;
-pub const INTF_EXTER: u16 = 1 << INTB_EXTER;
-pub const INTF_DSKSYNC: u16 = 1 << INTB_DSKSYNC;
-pub const INTF_RBF: u16 = 1 << INTB_RBF;
-pub const INTF_AUD3: u16 = 1 << INTB_AUD3;
-pub const INTF_AUD2: u16 = 1 << INTB_AUD2;
-pub const INTF_AUD1: u16 = 1 << INTB_AUD1;
-pub const INTF_AUD0: u16 = 1 << INTB_AUD0;
-pub const INTF_BLIT: u16 = 1 << INTB_BLIT;
-pub const INTF_VERTB: u16 = 1 << INTB_VERTB;
-pub const INTF_COPER: u16 = 1 << INTB_COPER;
-pub const INTF_PORTS: u16 = 1 << INTB_PORTS;
-pub const INTF_SOFTINT: u16 = 1 << INTB_SOFTINT;
-pub const INTF_DSKBLK: u16 = 1 << INTB_DSKBLK;
-pub const INTF_TBE: u16 = 1 << INTB_TBE;
-pub const INTF_ALL: u16 = 0x3FFF;
+impl InterruptBit {
+    /// Compute the interrupt flag for the bit
+    pub const fn flag(self) -> u16 {
+        1 << (self as u16)
+    }
 
-// Constants for DMA (Direct Memory Access)
-pub const DMAF_SETCLR: u16 = 1 << 15;
-pub const DMAF_AUD0: u16 = 1 << 0;
-pub const DMAF_AUD1: u16 = 1 << 1;
-pub const DMAF_AUD2: u16 = 1 << 2;
-pub const DMAF_AUD3: u16 = 1 << 3;
-pub const DMAF_DISK: u16 = 1 << 4;
-pub const DMAF_SPRITE: u16 = 1 << 5;
-pub const DMAF_BLITTER: u16 = 1 << 6;
-pub const DMAF_COPPER: u16 = 1 << 7;
-pub const DMAF_RASTER: u16 = 1 << 8;
-pub const DMAF_MASTER: u16 = 1 << 9;
-pub const DMAF_BLITHOG: u16 = 1 << 10;
-pub const DMAF_AUDIO: u16 = 0x000F;
-pub const DMAF_ALL: u16 = 0x01FF;
+    /// All flags combined
+    pub const fn all_flags() -> u16 {
+        0x3FFF
+    }
+}
+
+#[repr(u16)]
+pub enum DmaBit {
+    SetClr = 15,
+    Aud0 = 0,
+    Aud1 = 1,
+    Aud2 = 2,
+    Aud3 = 3,
+    Disk = 4,
+    Sprite = 5,
+    Blitter = 6,
+    Copper = 7,
+    Raster = 8,
+    Master = 9,
+    BlitHog = 10,
+}
+
+impl DmaBit {
+    /// Compute the DMA flag for the bit
+    pub const fn flag(self) -> u16 {
+        1 << (self as u16)
+    }
+
+    /// Audio-related flags (combines Aud0, Aud1, Aud2, Aud3)
+    pub const fn audio_flags() -> u16 {
+        DmaBit::Aud0.flag()
+            | DmaBit::Aud1.flag()
+            | DmaBit::Aud2.flag()
+            | DmaBit::Aud3.flag()
+    }
+
+    /// All flags combined
+    pub const fn all_flags() -> u16 {
+        // DMAF_ALL covers all relevant bits, up to `Master`
+        0x01FF
+    }
+}
 
 // Custom offsets
-pub const BLTDDAT: u16 = 0x000;
-pub const DMACONR: u16 = 0x002;
-pub const VPOSR: u16 = 0x004;
-pub const VHPOSR: u16 = 0x006;
-pub const DSKDATR: u16 = 0x008;
-pub const JOY0DAT: u16 = 0x00A;
-pub const JOY1DAT: u16 = 0x00C;
-pub const CLXDAT: u16 = 0x00E;
-pub const ADKCONR: u16 = 0x010;
-pub const POT0DAT: u16 = 0x012;
-pub const POT1DAT: u16 = 0x014;
-pub const POTINP: u16 = 0x016;
-pub const SERDATR: u16 = 0x018;
-pub const DSKBYTR: u16 = 0x01A;
-pub const INTENAR: u16 = 0x01C;
-pub const INTREQR: u16 = 0x01E;
-pub const DSKPT: u16 = 0x020;
-pub const DSKLEN: u16 = 0x024;
-pub const DSKDAT: u16 = 0x026;
-pub const REFPTR: u16 = 0x028;
-pub const VPOSW: u16 = 0x02A;
-pub const VHPOSW: u16 = 0x02C;
-pub const COPCON: u16 = 0x02E;
-pub const SERDAT: u16 = 0x030;
-pub const SERPER: u16 = 0x032;
-pub const POTGO: u16 = 0x034;
-pub const JOYTEST: u16 = 0x036;
-pub const STR: u16 = 0x038;
-pub const STRVBL: u16 = 0x03A;
-pub const STRHOR: u16 = 0x03C;
-pub const STRLONG: u16 = 0x03E;
-pub const BLTCON0: u16 = 0x040;
-pub const BLTCON1: u16 = 0x042;
-pub const BLTAFWM: u16 = 0x044;
-pub const BLTALWM: u16 = 0x046;
-pub const BLTCPT: u16 = 0x048;
-pub const BLTBPT: u16 = 0x04C;
-pub const BLTAPT: u16 = 0x050;
-pub const BLTDPT: u16 = 0x054;
-pub const BLTSIZE: u16 = 0x058;
-pub const BLTCON0L: u16 = 0x05B;
-pub const BLTSIZV: u16 = 0x05C;
-pub const BLTSIZH: u16 = 0x05E;
-pub const BLTCMOD: u16 = 0x060;
-pub const BLTBMOD: u16 = 0x062;
-pub const BLTAMOD: u16 = 0x064;
-pub const BLTDMOD: u16 = 0x066;
-pub const BLTCDAT: u16 = 0x070;
-pub const BLTBDAT: u16 = 0x072;
-pub const BLTADAT: u16 = 0x074;
-pub const DENISEID: u16 = 0x07C;
-pub const DSKSYNC: u16 = 0x07E;
-pub const COP1LC: u16 = 0x080;
-pub const COP2LC: u16 = 0x084;
-pub const COPJMP1: u16 = 0x088;
-pub const COPJMP2: u16 = 0x08A;
-pub const COPINS: u16 = 0x08C;
-pub const DIWSTRT: u16 = 0x08E;
-pub const DIWSTOP: u16 = 0x090;
-pub const DDFSTRT: u16 = 0x092;
-pub const DDFSTOP: u16 = 0x094;
-pub const DMACON: u16 = 0x096;
-pub const CLXCON: u16 = 0x098;
-pub const INTENA: u16 = 0x09A;
-pub const INTREQ: u16 = 0x09C;
-pub const ADKCON: u16 = 0x09E;
-pub const AUD: u16 = 0x0A0;
-pub const AUD0: u16 = 0x0A0;
-pub const AUD1: u16 = 0x0B0;
-pub const AUD2: u16 = 0x0C0;
-pub const AUD3: u16 = 0x0D0;
-pub const BPLPT: u16 = 0x0E0;
-pub const BPLCON0: u16 = 0x100;
-pub const BPLCON1: u16 = 0x102;
-pub const BPLCON2: u16 = 0x104;
-pub const BPLCON3: u16 = 0x106;
-pub const BPL1MOD: u16 = 0x108;
-pub const BPL2MOD: u16 = 0x10A;
-pub const BPLCON4: u16 = 0x10C;
-pub const CLXCON2: u16 = 0x10E;
-pub const BPLDAT: u16 = 0x110;
-pub const SPRPT: u16 = 0x120;
-pub const SPR: u16 = 0x140;
-pub const COLOR: u16 = 0x180;
-pub const HTOTAL: u16 = 0x1C0;
-pub const HSSTOP: u16 = 0x1C2;
-pub const HBSTRT: u16 = 0x1C4;
-pub const HBSTOP: u16 = 0x1C6;
-pub const VTOTAL: u16 = 0x1C8;
-pub const VSSTOP: u16 = 0x1CA;
-pub const VBSTRT: u16 = 0x1CC;
-pub const VBSTOP: u16 = 0x1CE;
-pub const SPRHSTRT: u16 = 0x1D0;
-pub const SPRHSTOP: u16 = 0x1D2;
-pub const BPLHSTRT: u16 = 0x1D4;
-pub const BPLHSTOP: u16 = 0x1D6;
-pub const HHPOSW: u16 = 0x1D8;
-pub const HHPOSR: u16 = 0x1DA;
-pub const BEAMCON0: u16 = 0x1DC;
-pub const HSSTRT: u16 = 0x1DE;
-pub const VSSTRT: u16 = 0x1E0;
-pub const HCENTER: u16 = 0x1E2;
-pub const DIWHIGH: u16 = 0x1E4;
-pub const FMODE: u16 = 0x1FC;
+#[repr(u16)]
+pub enum CustomOffset {
+    Bltddat = 0x000,
+    Dmaconr = 0x002,
+    Vposr = 0x004,
+    Vhposr = 0x006,
+    Dskdatr = 0x008,
+    Joy0dat = 0x00a,
+    Joy1dat = 0x00c,
+    Clxdat = 0x00e,
+    Adkconr = 0x010,
+    Pot0dat = 0x012,
+    Pot1dat = 0x014,
+    Potinp = 0x016,
+    Serdatr = 0x018,
+    Dskbytr = 0x01a,
+    Intenar = 0x01c,
+    Intreqr = 0x01e,
+    Dskpt = 0x020,
+    Dsklen = 0x024,
+    Dskdat = 0x026,
+    Refptr = 0x028,
+    Vposw = 0x02a,
+    Vhposw = 0x02c,
+    Copcon = 0x02e,
+    Serdat = 0x030,
+    Serper = 0x032,
+    Potgo = 0x034,
+    Joytest = 0x036,
+    Str = 0x038,
+    Strvbl = 0x03a,
+    Strhor = 0x03c,
+    Strlong = 0x03e,
+    Bltcon0 = 0x040,
+    Bltcon1 = 0x042,
+    Bltafwm = 0x044,
+    Bltalwm = 0x046,
+    Bltcpt = 0x048,
+    Bltbpt = 0x04c,
+    Bltapt = 0x050,
+    Bltdpt = 0x054,
+    Bltsize = 0x058,
+    Bltcon0l = 0x05b,
+    Bltsizv = 0x05c,
+    Bltsizh = 0x05e,
+    Bltcmod = 0x060,
+    Bltbmod = 0x062,
+    Bltamod = 0x064,
+    Bltdmod = 0x066,
+    Bltcdat = 0x070,
+    Bltbdat = 0x072,
+    Bltadat = 0x074,
+    Deniseid = 0x07c,
+    Dsksync = 0x07e,
+    Cop1lc = 0x080,
+    Cop2lc = 0x084,
+    Copjmp1 = 0x088,
+    Copjmp2 = 0x08a,
+    Copins = 0x08c,
+    Diwstrt = 0x08e,
+    Diwstop = 0x090,
+    Ddfstrt = 0x092,
+    Ddfstop = 0x094,
+    Dmacon = 0x096,
+    Clxcon = 0x098,
+    Intena = 0x09a,
+    Intreq = 0x09c,
+    Adkcon = 0x09e,
+    Aud0 = 0x0a0,
+    Aud1 = 0x0b0,
+    Aud2 = 0x0c0,
+    Aud3 = 0x0d0,
+    Bplpt1h = 0x0e0,
+    Bplpt1l = 0x0e2,
+    Bplpt2h = 0x0e4,
+    Bplpt2l = 0x0e6,
+    Bplpt3h = 0x0e8,
+    Bplpt3l = 0x0ea,
+    Bplpt4h = 0x0ec,
+    Bplpt4l = 0x0ee,
+    Bplpt5h = 0x0f0,
+    Bplpt5l = 0x0f2,
+    Bplcon0 = 0x100,
+    Bplcon1 = 0x102,
+    Bplcon2 = 0x104,
+    Bplcon3 = 0x106,
+    Bpl1mod = 0x108,
+    Bpl2mod = 0x10a,
+    Bplcon4 = 0x10c,
+    Clxcon2 = 0x10e,
+    Bpldat = 0x110,
+    Sprpt = 0x120,
+    Spr = 0x140,
+    Color00 = 0x180,
+    Color01 = 0x182,
+    Color02 = 0x184,
+    Color03 = 0x186,
+    Color04 = 0x188,
+    Color05 = 0x18A,
+    Color06 = 0x18C,
+    Color07 = 0x18E,
+    Color08 = 0x190,
+    Color09 = 0x192,
+    Color10 = 0x194,
+    Color11 = 0x196,
+    Color12 = 0x198,
+    Color13 = 0x19A,
+    Color14 = 0x19C,
+    Color15 = 0x19E,
+    Color16 = 0x1A0,
+    Color17 = 0x1A2,
+    Color18 = 0x1A4,
+    Color19 = 0x1A6,
+    Color20 = 0x1A8,
+    Color21 = 0x1AA,
+    Color22 = 0x1AC,
+    Color23 = 0x1AE,
+    Color24 = 0x1B0,
+    Color25 = 0x1B2,
+    Color26 = 0x1B4,
+    Color27 = 0x1B6,
+    Color28 = 0x1B8,
+    Color29 = 0x1BA,
+    Color30 = 0x1BC,
+    Color31 = 0x1BE,
+    Htotal = 0x1c0,
+    Hsstop = 0x1c2,
+    Hbstrt = 0x1c4,
+    Hbstop = 0x1c6,
+    Vtotal = 0x1c8,
+    Vsstop = 0x1ca,
+    Vbstrt = 0x1cc,
+    Vbstop = 0x1ce,
+    Sprhstrt = 0x1d0,
+    Sprhstop = 0x1d2,
+    Bplhstrt = 0x1d4,
+    Bplhstop = 0x1d6,
+    Hhposw = 0x1d8,
+    Hhposr = 0x1da,
+    Beamcon0 = 0x1dc,
+    Hsstrt = 0x1de,
+    Vsstrt = 0x1e0,
+    Hcenter = 0x1e2,
+    Diwhigh = 0x1e4,
+    Fmode = 0x1fc,
+}
+
+impl CustomOffset {
+    pub const fn as_u16(self) -> u16 {
+        self as u16
+    }
+}
