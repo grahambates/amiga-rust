@@ -55,7 +55,7 @@ extern "C" fn _start() {
     );
 
     while !right_mouse_button() {
-        wait_line(303);
+        wait_eof();
     }
 
     restore_system(state);

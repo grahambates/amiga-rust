@@ -1,6 +1,7 @@
-use core::arch::*;
 use crate::custom::*;
+use core::arch::*;
 
+/// Backed up system state to restore on exit
 pub struct SysState {
     dmacon: u16,
     intena: u16,
@@ -10,6 +11,7 @@ pub struct SysState {
     cop2: u32,
 }
 
+/// Disable the OS and get state to restore later
 pub fn kill_system() -> SysState {
     let custom = Custom::instance();
     let mut actiview: u32;
@@ -33,16 +35,16 @@ pub fn kill_system() -> SysState {
     load_view(0);
 
     // Backup system state
-    let state: SysState = SysState{
-        dmacon : custom.dmaconr(),
-        intena : custom.intenar(),
-        intreq : custom.intreqr(),
+    let state: SysState = SysState {
+        dmacon: custom.dmaconr(),
+        intena: custom.intenar(),
+        intreq: custom.intreqr(),
         actiview,
         cop1,
         cop2,
     };
 
-    wait_line(303);
+    wait_eof();
 
     // DMA and interrupts off
     custom.dmacon(DmaBit::all_flags());
@@ -51,8 +53,9 @@ pub fn kill_system() -> SysState {
     return state;
 }
 
+/// Restore OS and restore previous state
 pub fn restore_system(state: SysState) {
-    wait_line(303);
+    wait_eof();
     let custom = Custom::instance();
     // Disable all:
     custom.dmacon(DmaBit::all_flags());
@@ -66,7 +69,9 @@ pub fn restore_system(state: SysState) {
     load_view(state.actiview);
 
     // Return status - TODO: better way to do this?
-    unsafe { asm!( "move.l $0, %d0", options(nostack)); }
+    unsafe {
+        asm!("move.l $0, %d0", options(nostack));
+    }
 }
 
 #[inline(always)]
@@ -76,11 +81,16 @@ pub fn wait_line(line: u32) {
 }
 
 #[inline(always)]
+pub fn wait_eof() {
+    wait_line(303);
+}
+
+#[inline(always)]
 pub fn right_mouse_button() -> bool {
     Custom::instance().potinp() & (1 << 10) == 0
 }
 
-
+/// Graphics.library LoadView
 fn load_view(view: u32) {
     unsafe {
         asm!(
@@ -102,6 +112,7 @@ pub struct CopInst {
 }
 
 impl CopInst {
+    /// Move to custom register
     pub const fn mov(offset: CustomOffset, value: u16) -> Self {
         Self {
             first: offset.as_u16(),
@@ -109,13 +120,12 @@ impl CopInst {
         }
     }
 
+    /// Raw value pair
     pub const fn raw(first: u16, second: u16) -> Self {
-        Self {
-            first,
-            second,
-        }
+        Self { first, second }
     }
 
+    /// End copperlist
     pub const fn end() -> Self {
         Self {
             first: 0xffff,
