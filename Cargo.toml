@@ -5,11 +5,14 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.dev]
+opt-level = 1
+
 [dependencies]
 
 [[bin]]
 name = "m68k-rust"
-path = "main.rs"
+path = "src/main.rs"
 test = false
 doctest = false
 bench = false

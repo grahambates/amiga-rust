@@ -3,19 +3,23 @@
 #![no_std]
 #![no_main]
 
-use crate::custom::*;
-use crate::hw::*;
 use core::arch::*;
 use core::panic::PanicInfo;
-
-mod hw;
-mod custom;
-mod cia;
+mod amiga;
+use crate::amiga::copper::*;
+use crate::amiga::custom::*;
+use crate::amiga::utils::*;
+use crate::amiga::startup::*;
 
 // Minimal panic handler
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
+}
+
+#[no_mangle]
+pub extern "C" fn abort() -> ! {
+    loop {} // Enter an infinite loop as a placeholder for abort
 }
 
 //-------------------------------------------------------------------------------
@@ -72,18 +76,18 @@ extern "C" fn _start() {
 // Copper list
 
 #[link_section = ".MEMF_CHIP"]
-static mut COPPER: [CopInst; 51] = [
+static mut COPPER: [CopInst; 53] = [
     // bitplane pointers
-    CopInst::mov(CustomOffset::Bplpt1h, 0),
-    CopInst::mov(CustomOffset::Bplpt1l, 0),
-    CopInst::mov(CustomOffset::Bplpt2h, 0),
-    CopInst::mov(CustomOffset::Bplpt2l, 0),
-    CopInst::mov(CustomOffset::Bplpt3h, 0),
-    CopInst::mov(CustomOffset::Bplpt3l, 0),
-    CopInst::mov(CustomOffset::Bplpt4h, 0),
-    CopInst::mov(CustomOffset::Bplpt4l, 0),
-    CopInst::mov(CustomOffset::Bplpt5h, 0),
-    CopInst::mov(CustomOffset::Bplpt5l, 0),
+    CopInst::mov(CustomOffset::Bpl1pth, 0),
+    CopInst::mov(CustomOffset::Bpl1ptl, 0),
+    CopInst::mov(CustomOffset::Bpl2pth, 0),
+    CopInst::mov(CustomOffset::Bpl2ptl, 0),
+    CopInst::mov(CustomOffset::Bpl3pth, 0),
+    CopInst::mov(CustomOffset::Bpl3ptl, 0),
+    CopInst::mov(CustomOffset::Bpl4pth, 0),
+    CopInst::mov(CustomOffset::Bpl4ptl, 0),
+    CopInst::mov(CustomOffset::Bpl5pth, 0),
+    CopInst::mov(CustomOffset::Bpl5ptl, 0),
     // Screen
     CopInst::mov(CustomOffset::Bplcon0, (BPLS << 12) | (1 << 9)),
     CopInst::mov(CustomOffset::Bplcon1, 0),
@@ -126,6 +130,9 @@ static mut COPPER: [CopInst; 51] = [
     CopInst::mov(CustomOffset::Color29, 0x0321),
     CopInst::mov(CustomOffset::Color30, 0x0c78),
     CopInst::mov(CustomOffset::Color31, 0x0834),
+    // Test wait
+    CopInst::wait_v(100),
+    CopInst::mov(CustomOffset::Color00, 0x0111),
     // end copperlist
     CopInst::end(),
 ];
@@ -133,4 +140,4 @@ static mut COPPER: [CopInst; 51] = [
 // Image data
 
 #[link_section = ".MEMF_CHIP"]
-static IMAGE: [u8; IMAGE_SIZE as usize] = *include_bytes!("image.BPL");
+static IMAGE: [u8; IMAGE_SIZE as usize] = *include_bytes!("../data/image.BPL");

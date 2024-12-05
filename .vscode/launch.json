@@ -1,28 +1,44 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "amiga",
-      "request": "launch",
-      "preLaunchTask": "make",
-      "name": "Amiga 500 (Debug)",
-      "config": "A500",
-      "program": "${workspaceFolder}/target/m68k-bare-metal/debug/m68k-rust",
-      "kickstart": "${config:amiga.rom-paths.A500}",
-      "internalConsoleOptions": "openOnSessionStart",
-      "emuargs": ["--floppy_drive_0_sounds=off"],
-      "slowmem": "0"
-    },
-    {
-      "type": "amiga",
-      "request": "launch",
-      "preLaunchTask": "make",
-      "name": "Amiga 1200 (Debug)",
-      "config": "A1200",
-      "program": "${workspaceFolder}/target/m68k-bare-metal/debug/m68k-rust",
-      "kickstart": "${config:amiga.rom-paths.A1200}",
-      "internalConsoleOptions": "openOnSessionStart",
-      "emuargs": ["--floppy_drive_0_sounds=off"]
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "amiga",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "name": "AROS",
+            "config": "A500",
+            "program": "${workspaceFolder}/${config:amiga.program}",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "amiga",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "name": "Amiga 500",
+            "config": "A500",
+            "program": "${workspaceFolder}/${config:amiga.program}",
+            "kickstart": "${config:amiga.rom-paths.A500}",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "amiga",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "name": "Amiga 1200",
+            "config": "A1200",
+            "program": "${workspaceFolder}/${config:amiga.program}",
+            "kickstart": "${config:amiga.rom-paths.A1200}",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "amiga",
+            "request": "launch",
+            "preLaunchTask": "compile",
+            "name": "Amiga 4000",
+            "config": "A4000",
+            "program": "${workspaceFolder}/${config:amiga.program}",
+            "kickstart": "${config:amiga.rom-paths.A4000}",
+            "internalConsoleOptions": "openOnSessionStart"
+        }        
+    ]
 }
