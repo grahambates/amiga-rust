@@ -147,8 +147,8 @@ impl CiaAPortABit {
 // ciaa port B (0xbfe101) -- parallel port
 // (No bit defs)
 
+/// Serial and printer control
 #[repr(u8)]
-/// serial and printer control
 pub enum CiaBPortABit {
     /// printer busy
     PrtrBusy = 0,
@@ -174,8 +174,8 @@ impl CiaBPortABit {
     }
 }
 
+/// Disk control
 #[repr(u8)]
-/// disk control
 pub enum CiaBPortBBit {
     /// disk step heads
     DskStep = 0,

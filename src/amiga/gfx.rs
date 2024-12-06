@@ -1,5 +1,5 @@
 use core::arch::*;
-// use crate::exec::*;
+// use crate::amiga::exec::*;
 
 #[repr(C)]
 pub struct GraphicsLib {
@@ -26,14 +26,13 @@ impl GraphicsLib {
         unsafe { &*gfxbase_ptr }
     }
 
-    pub fn wait_tof(&self, view: u32) {
+    pub fn wait_tof(&self) {
         unsafe {
             asm!(
-                "move.l {0}, %a6", // Graphics.library (ExecBase->IntVects[6].iv_Data)
+                "move.l {0}, %a6",
                 ".short 0x4eae", // jsr {offset}(a6)
                 ".short -270", // _LVOWaitTOF
                 in(reg) self,
-                in("a1") view,
                 options(nostack),
             );
         }
@@ -42,7 +41,7 @@ impl GraphicsLib {
     pub fn load_view(&self, view: u32) {
         unsafe {
             asm!(
-                "move.l {0}, %a6", // Graphics.library (ExecBase->IntVects[6].iv_Data)
+                "move.l {0}, %a6",
                 ".short 0x4eae", // jsr {offset}(a6)
                 ".short -222", // _LVOLoadView
                 in(reg) self,

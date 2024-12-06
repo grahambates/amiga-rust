@@ -60,7 +60,7 @@ extern "C" fn _start() {
             | DmaBit::Raster.flag(),
     );
 
-    while !left_mouse_button() && !right_mouse_button() {
+    while !left_mouse_button() {
         // Do effect
 
         wait_blit();

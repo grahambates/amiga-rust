@@ -1,5 +1,7 @@
 use core::ptr::{read_volatile, write_volatile};
 
+// macros for getters/setters
+
 macro_rules! define_write_fn {
     ($name:ident, $ty:ty, $doc:expr) => {
         #[doc = $doc]
@@ -263,24 +265,39 @@ pub struct SpriteDef {
 /// Interrupt control bits
 #[repr(u16)]
 pub enum InterruptBit {
+    /// Set/Clear control bit. Determines if bits written with a 1 get set or cleared. Bits written with a zero are unchanged
     SetClr = 15,
+    /// Master interrupt (enable only, no request)
     IntEn = 14,
+    /// External interrupt
     Exter = 13,
+    /// Disk sync register (DSKSYNC) matches disk
     DiskSync = 12,
+    /// Serial port receive buffer full
     Rbf = 11,
+    /// Audio channel 3 block finished
     Aud3 = 10,
+    /// Audio channel 2 block finished
     Aud2 = 9,
+    /// Audio channel 1 block finished
     Aud1 = 8,
+    /// Audio channel 0 block finished
     Aud0 = 7,
+    /// Blitter has finished
     Blit = 6,
+    /// Start of vertical blank
     Vertb = 5,
+    /// Coprocessor
     Coper = 4,
+    /// I/O Ports and timers
     Ports = 3,
+    /// Reserved for software initiated interrupt.
     SoftInt = 2,
+    /// Disk block finished
     DiskBlk = 1,
+    /// Serial port transmit buffer empty
     Tbe = 0,
 }
-
 impl InterruptBit {
     /// Compute the interrupt flag for the bit
     pub const fn flag(self) -> u16 {
@@ -296,20 +313,35 @@ impl InterruptBit {
 /// DMA control bits
 #[repr(u16)]
 pub enum DmaBit {
+    /// Set/Clear control bit. Determines if bits written with a 1 get set or cleared. Bits written with a zero are unchanged
     SetClr = 15,
-    Aud0 = 0,
-    Aud1 = 1,
-    Aud2 = 2,
-    Aud3 = 3,
-    Disk = 4,
-    Sprite = 5,
-    Blitter = 6,
-    Copper = 7,
-    Raster = 8,
-    Master = 9,
+    /// Blitter busy status bit (read only)
+    Bbusy = 14,
+    /// Blitter logic zero status bit (read only)
+    Bzero = 13,
+    /// Blitter DMA priority (over CPU micro)
     BlitHog = 10,
+    /// Enable all DMA below (also UHRES DMA)
+    Master = 9,
+    /// Bit plane DMA enable
+    Raster = 8,
+    /// Coprocessor DMA enable
+    Copper = 7,
+    /// Blitter DMA enable
+    Blitter = 6,
+    /// Sprite DMA enable
+    Sprite = 5,
+    /// Disk DMA enable
+    Disk = 4,
+    /// Audio channel 3 DMA enable
+    Aud3 = 3,
+    /// Audio channel 2 DMA enable
+    Aud2 = 2,
+    /// Audio channel 1 DMA enable
+    Aud1 = 1,
+    /// Audio channel 0 DMA enable
+    Aud0 = 0,
 }
-
 impl DmaBit {
     /// Compute the DMA flag for the bit
     pub const fn flag(self) -> u16 {
@@ -806,7 +838,6 @@ pub enum CustomOffset {
     /// register
     Fmode = 0x1fc,
 }
-
 impl CustomOffset {
     pub const fn as_u16(self) -> u16 {
         self as u16
