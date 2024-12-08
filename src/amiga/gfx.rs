@@ -1,5 +1,5 @@
 use core::arch::*;
-// use crate::amiga::exec::*;
+use crate::amiga::exec::*;
 
 #[repr(C)]
 pub struct GraphicsLib {
@@ -12,17 +12,17 @@ pub struct GraphicsLib {
 
 impl GraphicsLib {
     pub fn instance() -> &'static Self {
-        let gfxbase_ptr: *mut Self;
-        unsafe {
-            asm!(
-                "move.l 4, %a6", // exec base
-                "move.l 156(%a6), {0}", // Graphics.library (ExecBase->IntVects[6].iv_Data)
-                out(reg) gfxbase_ptr,
-                options(nostack),
-            )
-        }
-        // let library_name = b"graphics.library\0".as_ptr();
-        // let gfxbase_ptr = old_open_library(library_name) as *mut Self;
+        // let gfxbase_ptr: *mut Self;
+        // unsafe {
+        //     asm!(
+        //         "move.l 4, %a6", // exec base
+        //         "move.l 156(%a6), {0}", // Graphics.library (ExecBase->IntVects[6].iv_Data)
+        //         out(reg) gfxbase_ptr,
+        //         options(nostack),
+        //     )
+        // }
+        let library_name = b"graphics.library\0".as_ptr();
+        let gfxbase_ptr = old_open_library(library_name) as *mut Self;
         unsafe { &*gfxbase_ptr }
     }
 
