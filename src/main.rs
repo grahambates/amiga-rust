@@ -1,5 +1,5 @@
 #![allow(static_mut_refs, dead_code)]
-#![feature(asm_experimental_arch)]
+#![feature(asm_experimental_arch, naked_functions)]
 #![no_std]
 #![no_main]
 
@@ -8,9 +8,9 @@ use core::panic::PanicInfo;
 mod amiga;
 use crate::amiga::copper::*;
 use crate::amiga::custom::*;
-use crate::amiga::utils::*;
-use crate::amiga::startup::*;
 use crate::amiga::p61::*;
+use crate::amiga::startup::*;
+use crate::amiga::utils::*;
 
 // Minimal panic handler
 #[panic_handler]
@@ -49,27 +49,23 @@ extern "C" fn _start() {
     }
 
     p61_init(MOD.as_ptr());
-
-    let custom = Custom::instance();
+    set_interrupt_l6(l6int as * const ());
 
     // Set copper pointer
-    unsafe { custom.cop1lc(COPPER.as_ptr() as u32) }
-
-    set_l6int_fn(l6int);
-
-    // Enable DMA
-    custom.dmacon(
-        DmaBit::SetClr.flag()
-            | DmaBit::Master.flag()
-            | DmaBit::Copper.flag()
-            | DmaBit::Raster.flag(),
-    );
-    custom.intena(InterruptBit::SetClr.flag() | InterruptBit::Vertb.flag());
+    unsafe {
+        Custom::instance()
+            .cop1lc(COPPER.as_ptr() as u32)
+            .intena(InterruptBit::SetClr.flag() | InterruptBit::Vertb.flag())
+            .dmacon(
+                DmaBit::SetClr.flag()
+                    | DmaBit::Master.flag()
+                    | DmaBit::Copper.flag()
+                    | DmaBit::Raster.flag(),
+            );
+    }
 
     while !left_mouse_button() {
         // Do effect
-        // p61_music();
-
         wait_blit();
         wait_eof();
     }
@@ -79,15 +75,26 @@ extern "C" fn _start() {
     unsafe { asm!("move.l $0, %d0", options(nostack)) }
 }
 
-// #[interrupt] not supported on m68k :-(
 fn l6int() {
-    Custom::instance().intreq(InterruptBit::Vertb.flag());
-    p61_music();
-    unsafe { asm!(
-        "move.l (%sp)+, %a3", // this is stashed in prologue as it's used in p61_music
-        "rte"
-    ) }
+    unsafe {
+        asm!(
+            ".short 0x48e7, 0xfffe", // "movem.l %d0-%a6, -(%sp)",
+            "jsr handle_interrupt",
+            ".short 0x4cdf, 0x7fff", // "movem.l (%sp)+, %d0-%a6",
+            "rte",
+            options(nostack),
+        )
+    }
 }
+
+#[no_mangle]
+fn handle_interrupt() {
+    Custom::instance().intreq(InterruptBit::Vertb.flag());
+    unsafe { FRAME += 1 }
+    p61_music();
+}
+
+static mut FRAME: u32 = 0;
 
 //-------------------------------------------------------------------------------
 
@@ -156,7 +163,6 @@ static mut COPPER: [CopInst; 53] = [
 ];
 
 // Image data
-
 #[link_section = ".MEMF_CHIP"]
 static IMAGE: [u8; IMAGE_SIZE as usize] = *include_bytes!("../data/image.BPL");
 

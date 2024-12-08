@@ -36,7 +36,7 @@ pub fn wait_blit() {
 }
 
 /// Get level 6 interrupt
-pub fn get_l6int() -> u32 {
+pub fn get_interrupt_l6() -> * const () {
     // TODO: get VBR
     let l6int: u32;
     unsafe {
@@ -46,22 +46,11 @@ pub fn get_l6int() -> u32 {
             options(nostack)
         )
     }
-    return l6int;
+    return l6int as *const ();
 }
 
 /// Set level 6 interrupt
-pub fn set_l6int(l6int: u32) {
-    // TODO: get VBR
-    unsafe {
-        asm!(
-            "move.l %a0, 0x6c",
-            in("a0") l6int,
-            options(nostack)
-        )
-    }
-}
-
-pub fn set_l6int_fn(l6int: fn()) {
+pub fn set_interrupt_l6(l6int: * const ()) {
     // TODO: get VBR
     unsafe {
         asm!(

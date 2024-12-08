@@ -5,8 +5,9 @@ use core::ptr::{read_volatile, write_volatile};
 macro_rules! define_write_fn {
     ($name:ident, $ty:ty, $doc:expr) => {
         #[doc = $doc]
-        pub fn $name(&mut self, value: $ty) {
+        pub fn $name(&mut self, value: $ty) -> &mut Self {
             unsafe { write_volatile(&mut self.$name, value); }
+            return self;
         }
     };
 }

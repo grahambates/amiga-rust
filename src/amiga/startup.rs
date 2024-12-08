@@ -1,9 +1,6 @@
 use crate::amiga::custom::*;
 use crate::amiga::gfx::*;
-use crate::amiga::utils::wait_eof;
-use crate::get_l6int;
-use crate::set_l6int;
-
+use crate::amiga::utils::*;
 /// Backed up system state to restore on exit
 pub struct SysState {
     dmacon: u16,
@@ -12,7 +9,7 @@ pub struct SysState {
     actiview: u32,
     cop1: u32,
     cop2: u32,
-    l6int: u32,
+    l6int: * const (),
 }
 
 /// Disable the OS and get state to restore later
@@ -32,7 +29,7 @@ pub fn kill_system() -> SysState {
         actiview,
         cop1,
         cop2,
-        l6int: get_l6int(),
+        l6int: get_interrupt_l6(),
     };
 
     gfxbase.load_view(0);
@@ -52,7 +49,7 @@ pub fn restore_system(state: SysState) {
     // Disable all:
     custom.dmacon(DmaBit::all_flags());
     custom.intena(InterruptBit::all_flags());
-    set_l6int(state.l6int);
+    set_interrupt_l6(state.l6int);
     // Restore:
     custom.dmacon(DmaBit::SetClr.flag() | DmaBit::Master.flag() | state.dmacon);
     custom.intena(InterruptBit::SetClr.flag() | state.intena);
