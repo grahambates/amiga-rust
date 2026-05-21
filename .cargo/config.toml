@@ -5,3 +5,4 @@ target = "m68k-bare-metal.json"
 
 [unstable]
 build-std = ["core"]
+json-target-spec = true

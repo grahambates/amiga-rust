@@ -1,5 +1,5 @@
 #![allow(static_mut_refs, dead_code)]
-#![feature(asm_experimental_arch, naked_functions)]
+#![feature(asm_experimental_arch)]
 #![no_std]
 #![no_main]
 
